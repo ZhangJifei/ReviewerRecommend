@@ -1,0 +1,55 @@
+
+PR id :123
+
+file change list:
+File 1: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+File 2: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+File 3: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+PR author: Mike
+
+
+
+
+ 
+The top N(3) recommend reviwer:['Jerry', 'Jim', 'Mike']
+
+We recommend reviewer:  Jerry
+It's the right person for below files:
+File 1: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+1, 2, 11.0, 1, 2, 0.0
+good coder
+great reviewer
+File 2: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+0, 0, 0, 1, 1, 0.0
+good reviewer
+File 3: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+0, 0, 0, 1, 1, 0.0
+good reviewer
+
+We recommend reviewer:  Jim
+It's the right person for below files:
+File 1: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+0, 0, 0, 1, 2, 0.5
+great reviewer
+File 2: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+0, 0, 0, 1, 1, 0.0
+good reviewer
+File 3: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+0, 0, 0, 1, 1, 0.0
+good reviewer
+
+We recommend reviewer:  Mike
+It's the right person for below files:
+File 1: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+1, 2, 24.5, 1, 2, 0.0
+good coder
+great reviewer
+File 2: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+0, 0, 0, 1, 1, 0.0
+good reviewer
+File 3: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+1, 1, 3.0, 1, 1, 0.0
+good coder
+good reviewer
+

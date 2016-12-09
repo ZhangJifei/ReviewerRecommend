@@ -13,7 +13,8 @@ class mongodb():
         (self.db)[collName].insert_one(data)
 
         return True
-    
+    def updateOne(self,collName,condition,updateData):
+         (self.db)[collName].update_one(condition,{'$set': updateData}, upsert=False)
     def getLastCommit(self, collName,key):
         if collName not in self.db.collection_names() or 0 == (self.db)[collName].count:
             return None

@@ -99,31 +99,35 @@ class machineLearn(object):
         model = GaussianNB()
         self.model_Bayes = self.classifyModelTrain(model)
     def save_model(self):
+        if os.path.isdir('model'):
+            pass
+        else:
+            os.mkdir('model')
         if self.model_LogisticRegression:
-            joblib.dump(self.model_LogisticRegression, "LogisticRegression_model.m")
+            joblib.dump(self.model_LogisticRegression, "./model/LogisticRegression_model.m")
         if self.model_DTC :
-            joblib.dump(self.model_DTC, "DTC_model.m")
+            joblib.dump(self.model_DTC, "./model/DTC_model.m")
         if self.model_SVM :
-            joblib.dump(self.model_SVM, "SVM_model.m")
+            joblib.dump(self.model_SVM, "./model/SVM_model.m")
         if self.model_Random_Forest:
-            joblib.dump(self.model_Random_Forest, "Random_Forest_model.m")
+            joblib.dump(self.model_Random_Forest, "./model/Random_Forest_model.m")
         if self.model_AdaBoost:
-            joblib.dump(self.model_AdaBoost, "AdaBoost_model.m")
+            joblib.dump(self.model_AdaBoost, "./model/AdaBoost_model.m")
         if self.model_Bayes:
-            joblib.dump(self.model_Bayes, "Bayes_model.m")
+            joblib.dump(self.model_Bayes, "./model/Bayes_model.m")
     def load_model(self):
-        if os.path.exists("LogisticRegression_model.m"):
-            self.model_LogisticRegression = joblib.load("LogisticRegression_model.m")
-        if os.path.exists("DTC_model.m"):
-            self.model_DTC = joblib.load("DTC_model.m")
-        if os.path.exists("SVM_model.m"):
-            self.model_SVM = joblib.load("SVM_model.m")
-        if os.path.exists("Random_Forest_model.m"):
-            self.model_Random_Forest = joblib.load("Random_Forest_model.m")
-        if os.path.exists("AdaBoost_model.m"):
-            self.model_AdaBoost = joblib.load("AdaBoost_model.m")
-        if os.path.exists("Bayes_model.m"):
-            self.model_Bayes = joblib.load("Bayes_model.m")
+        if os.path.exists("./model/LogisticRegression_model.m"):
+            self.model_LogisticRegression = joblib.load("./model/LogisticRegression_model.m")
+        if os.path.exists("./model/DTC_model.m"):
+            self.model_DTC = joblib.load("./model/DTC_model.m")
+        if os.path.exists("./model/SVM_model.m"):
+            self.model_SVM = joblib.load("./model/SVM_model.m")
+        if os.path.exists("./model/Random_Forest_model.m"):
+            self.model_Random_Forest = joblib.load("./model/Random_Forest_model.m")
+        if os.path.exists("./model/AdaBoost_model.m"):
+            self.model_AdaBoost = joblib.load("./model/AdaBoost_model.m")
+        if os.path.exists("./model/Bayes_model.m"):
+            self.model_Bayes = joblib.load("./model/Bayes_model.m")
         
 
     def reviwerPredict(self, predict_x):

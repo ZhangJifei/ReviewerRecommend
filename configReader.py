@@ -21,6 +21,7 @@ class configReader(object):
         database['collName_PR'] = self.cf.get('DATABASE','collName_PR')
         database['collName_PR2'] = self.cf.get('DATABASE','collName_PR2')
         database['collName_git'] = self.cf.get('DATABASE','collName_git')
+        database['collName_result'] = self.cf.get('DATABASE','collName_result')
         
         return database
     def get_git(self):

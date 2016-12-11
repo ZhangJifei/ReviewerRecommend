@@ -53,3 +53,8 @@ File 3: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 good coder
 good reviewer
 
+Recommend Metrics:
+Precision:20%
+Recall:30%
+Novelty per 7 days: 80%
+Coverage per 7 days:90%

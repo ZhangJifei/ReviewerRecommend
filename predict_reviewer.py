@@ -13,6 +13,7 @@ from featuresParser import featuresParser
 from ML_model import machineLearn
 
 MAX_REVIEWER_NUM = 6
+MEASURE_DAYS = 7*24*60*60*1000
 
 
 def process_argument():
@@ -30,8 +31,8 @@ def printrawData(review_id,PRfileList,TopNName,PRchoseReviewer,author):
     print '\nPR reviewer:'
     for name in PRchoseReviewer:
         print name
-    print ' '
-    print 'the top N recommend reviewer:{}'.format(TopNName)
+    print '\nthe top N(6) recommend reviwer:{}'.format(TopNName)
+    
 def recommendLevel(frameFeatures,code_average,reviwer_average):
     code_level =''
     reviwer_level = ''
@@ -42,13 +43,62 @@ def recommendLevel(frameFeatures,code_average,reviwer_average):
     if reviwer_temp: 
         reviwer_level = "great reviewer" if reviwer_temp >reviwer_average else "good reviewer"
     return [code_level,reviwer_level]
+def getAlias(reviewers):
+    alias = []
+    for reviewer in reviewers:
+        name = reviewer.split('-')[-1]
+        name = name.lower()
+        alias.append(name)
+    return alias
+def recommendMeasure(PRchoseReviewer,TopNName,db,collName_result,engineerNumber):
+
+    nowTime = int(time.time())
+    PRr=set(getAlias(PRchoseReviewer))
+    RCr=set(getAlias(TopNName))
+
+    precision = float(len(PRr&RCr))/len(RCr)
+    recall = float(len(PRr&RCr))/len(PRr)
+        
+    findCondition ={'time':{'$gte':nowTime-MEASURE_DAYS}}   
+    docs = db.findInfo(collName_result,findCondition)
+    allrecommendReviewer = set()
+    missNumber = 0.0
+    allPRRNumber = 0.0
+    if docs: 
+        for doc in docs:
+
+            greatOnes = doc['greatOnes']
+            PRReviewer = doc['PRReviewer']
+            recommendReviewer = doc['recommendReviewer']
+
+            missNumber+=len(set(greatOnes)-set(PRReviewer))
+      
+            allPRRNumber+=len(PRReviewer)
+            allrecommendReviewer = set(recommendReviewer)| allrecommendReviewer
+    coverage = float(len(allrecommendReviewer))/engineerNumber
+
+    degree = missNumber/allPRRNumber
+    return precision,recall,coverage,degree
+    
+def savePredictResult(db,collName_result,review_id,PRchoseReviewer,author,TopNName,greatOnes):
+    PRReviewer = PRchoseReviewer
+    PRReviewer.append(author)
+ 
+    condition = {"id": review_id};
+    docs = db.findInfo(collName_result,condition)
+    authorlist=[]
+    authorlist.append(author)
+    predictresult={'id':review_id,'time':nowTime,'PRReviewer':getAlias(PRReviewer),'author':getAlias(authorlist),'recommendReviewer':getAlias(TopNName),'greatOnes':getAlias(greatOnes)}
+
+    if docs:
+        db.updateOne(collName_result,condition,predictresult)
+    else:
+        db.insertOne(collName_result,predictresult)
+    
 
 if __name__=="__main__":
     
     import os
-    emailpath=os.path.abspath(sys.path[0]+'/utilities')
-    sys.path.append(emailpath)
-
     args = process_argument()
 
     #--------------------
@@ -78,7 +128,7 @@ if __name__=="__main__":
     #--------------------
     #predict
     #--------------------
-    nameList = [engineer['name'] for engineer in engineerList]
+    nameList = [engineer['name']+'-'+engineer['alias'] for engineer in engineerList]
 
     frameClassification = DataFrame(0, columns=nameList, index=PRfileList)
     frameFeatures = DataFrame(0, columns=nameList, index=PRfileList)
@@ -87,8 +137,8 @@ if __name__=="__main__":
             para_features = fparser.get_features(str(nowTime),filename, engineer)
             predicted_LogisticRegression, predicted_DTC, predicted_SVM, \
             predicted_Random_Forest, predicted_AdaBoost, predicted_Bayes = ML_model.reviwerPredict(para_features)
-            frameFeatures[engineer['name']][filename] =  str(para_features)[1:-1]
-            frameClassification[engineer['name']][filename] = predicted_LogisticRegression[0]+predicted_DTC[0]+predicted_SVM[0]+predicted_Random_Forest[0]+predicted_AdaBoost[0]+predicted_Bayes[0]
+            frameFeatures[engineer['name']+'-'+engineer['alias']][filename] =  str(para_features)[1:-1]
+            frameClassification[engineer['name']+'-'+engineer['alias']][filename] = predicted_LogisticRegression[0]+predicted_DTC[0]+predicted_SVM[0]+predicted_Random_Forest[0]+predicted_AdaBoost[0]+predicted_Bayes[0]
     
     #--------------------
     #get top N
@@ -112,7 +162,9 @@ if __name__=="__main__":
  
     
     # print recommendation reason
+    greatOnes=[]
     for engineerName in TopNName:
+        isgreatOne = False
         print "\nWe recommend reviewer: ", engineerName
         print "It's the right person for below files:"
         for i in range(0,len(frameFeatures.index)):
@@ -125,6 +177,18 @@ if __name__=="__main__":
         
                 for level in levels:
                     if level:
+                        isgreatOne = True
                         print level
+        if isgreatOne:
+            greatOnes.append(engineerName)
+    # save predict result to db:
+    savePredictResult(db,database['collName_result'],args.review_id,PRchoseReviewer,author,TopNName,greatOnes)
 
-						
+    precision,recall,coverage,degree = recommendMeasure(PRchoseReviewer,TopNName,db,database['collName_result'],len(engineerList))
+    
+    print '\nRecommend Metrics:'
+    print "Precision:{}%".format(precision*100)
+    print "Recall:{}%".format(recall*100)
+    print "Novelty per 7 days::{}%".format(degree*100)
+    print "Coverage per 7 days:{}%".format(coverage*100)
+    

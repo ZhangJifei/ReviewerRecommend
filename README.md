@@ -52,7 +52,19 @@ python ML_model.py
 3. For the review with id xxx, use the model generated in step 2 to recommend reviewers with top N priority and recommendation reasons.  
 python predict_reviewer.py -id xxx  
 
+#Output 
+1. The top N recommended reviewer list:  
+E.g. ['Jerry', 'Jim', 'Mike']  
 
+2. Recommend reason:  
+For each recommended reviewer with file, the reason would be given.  
+If the person's code change or review contribution is more than average, a "great" word would be given.   
+
+3. Recommend Metrics:  
+Precision:  true true num / predicted num (N)  
+Recall:  true true num / really chosen num  
+Novelty per 7 days: Within the latest 7 days, num of "great" that was not chosen by review author originally / total number of reviewers.  
+Coverage per 7 days:  Within the latest 7 days, num of recommended reviewers / total number of reviewers in the pool.   
 
 #Authors
 Github id ZhangJifei with zhangxiaofancd@163.com  

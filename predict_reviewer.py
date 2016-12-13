@@ -19,6 +19,7 @@ MEASURE_DAYS = 7*24*60*60*1000
 def process_argument():
     parser = argparse.ArgumentParser(description="description:predict reviewer", epilog=" %(prog)s description end")
     parser.add_argument('-id',dest="review_id")
+    parser.add_argument('-m',dest="mode",default='test')
     args = parser.parse_args()
     return args
 
@@ -31,7 +32,7 @@ def printrawData(review_id,PRfileList,TopNName,PRchoseReviewer,author):
     print '\nPR reviewer:'
     for name in PRchoseReviewer:
         print name
-    print '\nthe top N(6) recommend reviwer:{}'.format(TopNName)
+    print '\nthe top N recommend reviwer:{}'.format(TopNName)
     
 def recommendLevel(frameFeatures,code_average,reviwer_average):
     code_level =''
@@ -50,37 +51,29 @@ def getAlias(reviewers):
         name = name.lower()
         alias.append(name)
     return alias
-def recommendMeasure(PRchoseReviewer,TopNName,db,collName_result,engineerNumber):
+def recommendMeasure(createdDate,PRchoseReviewer,TopNName,greatOnes,db,collName_result,engineerNumber):
 
-    nowTime = int(time.time())
     PRr=set(getAlias(PRchoseReviewer))
     RCr=set(getAlias(TopNName))
 
     precision = float(len(PRr&RCr))/len(RCr)
     recall = float(len(PRr&RCr))/len(PRr)
         
-    findCondition ={'time':{'$gte':nowTime-MEASURE_DAYS}}   
+    findCondition ={'time':{'$gte':createdDate-MEASURE_DAYS}}   
     docs = db.findInfo(collName_result,findCondition)
     allrecommendReviewer = set()
-    missNumber = 0.0
+    missNumber =len(set(getAlias(greatOnes))-set(getAlias(PRchoseReviewer)))
+    degree = float(missNumber)/len(PRchoseReviewer)
     allPRRNumber = 0.0
     if docs: 
         for doc in docs:
-
-            greatOnes = doc['greatOnes']
-            PRReviewer = doc['PRReviewer']
             recommendReviewer = doc['recommendReviewer']
-
-            missNumber+=len(set(greatOnes)-set(PRReviewer))
-      
-            allPRRNumber+=len(PRReviewer)
             allrecommendReviewer = set(recommendReviewer)| allrecommendReviewer
     coverage = float(len(allrecommendReviewer))/engineerNumber
 
-    degree = missNumber/allPRRNumber
     return precision,recall,coverage,degree
     
-def savePredictResult(db,collName_result,review_id,PRchoseReviewer,author,TopNName,greatOnes):
+def savePredictResult(createdDate,db,collName_result,review_id,PRchoseReviewer,author,TopNName,greatOnes):
     PRReviewer = PRchoseReviewer
     PRReviewer.append(author)
  
@@ -88,7 +81,7 @@ def savePredictResult(db,collName_result,review_id,PRchoseReviewer,author,TopNNa
     docs = db.findInfo(collName_result,condition)
     authorlist=[]
     authorlist.append(author)
-    predictresult={'id':review_id,'time':nowTime,'PRReviewer':getAlias(PRReviewer),'author':getAlias(authorlist),'recommendReviewer':getAlias(TopNName),'greatOnes':getAlias(greatOnes)}
+    predictresult={'id':review_id,'time':createdDate,'PRReviewer':getAlias(PRReviewer),'author':getAlias(authorlist),'recommendReviewer':getAlias(TopNName),'greatOnes':getAlias(greatOnes)}
 
     if docs:
         db.updateOne(collName_result,condition,predictresult)
@@ -114,10 +107,16 @@ if __name__=="__main__":
     #--------------------
     db = mongodb(database['dbName'])
     bitbucketapi = Bitbucket(bitbucket['url'],bitbucket['username'],bitbucket['password'],bitbucket['project'],bitbucket['repo'],db)
-    PRfileList = bitbucketapi.get_file_changes(args.review_id)
-    
-    nowTime = int(time.time())
-    print nowTime
+    if args.mode == 'test':
+        from test_data import PRfileList,PRchoseReviewer,author,prid,createdDate
+        args.review_id = prid
+    else:
+        PRfileList = bitbucketapi.get_file_changes(args.review_id)
+        PRchoseReviewer = bitbucketapi.get_reviewers(args.review_id)
+        author = bitbucketapi.get_author(args.review_id)
+        createdDate = bitbucketapi.get_createdDate(args.review_id)
+       
+
     fparser = featuresParser(db,collName_git=database['collName_git'],collName_PR2=database['collName_PR2'])
     #--------------------
     #load machine learning model
@@ -134,7 +133,7 @@ if __name__=="__main__":
     frameFeatures = DataFrame(0, columns=nameList, index=PRfileList)
     for filename in PRfileList:
         for engineer in engineerList:
-            para_features = fparser.get_features(str(nowTime),filename, engineer)
+            para_features = fparser.get_features(str(createdDate),filename, engineer)
             predicted_LogisticRegression, predicted_DTC, predicted_SVM, \
             predicted_Random_Forest, predicted_AdaBoost, predicted_Bayes = ML_model.reviwerPredict(para_features)
             frameFeatures[engineer['name']+'-'+engineer['alias']][filename] =  str(para_features)[1:-1]
@@ -155,8 +154,7 @@ if __name__=="__main__":
     
     #stdout = sys.stdout
     #sys.stdout = stdOutfile = StringIO.StringIO()
-    PRchoseReviewer = bitbucketapi.get_reviewers(args.review_id)
-    author = bitbucketapi.get_author(args.review_id)
+
 
     printrawData(args.review_id,PRfileList,TopNName,PRchoseReviewer,author)
  
@@ -182,13 +180,14 @@ if __name__=="__main__":
         if isgreatOne:
             greatOnes.append(engineerName)
     # save predict result to db:
-    savePredictResult(db,database['collName_result'],args.review_id,PRchoseReviewer,author,TopNName,greatOnes)
+    savePredictResult(createdDate,db,database['collName_result'],args.review_id,PRchoseReviewer,author,TopNName,greatOnes)
 
-    precision,recall,coverage,degree = recommendMeasure(PRchoseReviewer,TopNName,db,database['collName_result'],len(engineerList))
+    precision,recall,coverage,degree = recommendMeasure(createdDate,PRchoseReviewer,TopNName,greatOnes,db,database['collName_result'],len(engineerList))
     
     print '\nRecommend Metrics:'
-    print "Precision:{}%".format(precision*100)
-    print "Recall:{}%".format(recall*100)
-    print "Novelty per 7 days::{}%".format(degree*100)
-    print "Coverage per 7 days:{}%".format(coverage*100)
-    
+    print "Precision:{}%".format(int(precision*100))
+    print "Recall:{}%".format(int(recall*100))
+    print "Novelty:{}%".format(int(degree*100))
+    print "Coverage per 7 days:{}%".format(int(coverage*100))
+
+    #recommendationDraft = stdOutfile.getvalue()

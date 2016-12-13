@@ -63,7 +63,7 @@ If the person's code change or review contribution is more than average, a "grea
 3. Recommend Metrics:  
 Precision:  true true num / predicted num (N)  
 Recall:  true true num / really chosen num  
-Novelty per 7 days: Within the latest 7 days, num of "great" that was not chosen by review author originally / total number of reviewers.  
+Novelty: Num of "great" that was not chosen by review author originally / total number of reviewers.  
 Coverage per 7 days:  Within the latest 7 days, num of recommended reviewers / total number of reviewers in the pool.   
 
 #Authors
